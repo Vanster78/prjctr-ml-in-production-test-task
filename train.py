@@ -1,4 +1,3 @@
-import evaluate
 from torch.nn.modules import MSELoss
 from transformers import \
     AutoTokenizer,\
@@ -18,33 +17,30 @@ class RMSETrainer(Trainer):
             return loss
 
 
-def compute_rmse(eval_pred):
-    predictions, labels = eval_pred
-    return METRIC.compute(predictions=predictions,
-                          references=labels,
-                          squared=False)
-
-
-METRIC = evaluate.load('mse')
 MODEL = 'bert-base-cased'
-DATA_DIR = 'data'
-DEVICE = 'cpu'
+DATA_DIR = 'data/train.csv'
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL)
-model = AutoModelForSequenceClassification.from_pretrained(MODEL, num_labels=1)
 
-train_dataset, val_dataset = CommonLitDataset.create(DATA_DIR,
-                                                     tokenizer,
-                                                     train=True)
-train_dataset = train_dataset
-test_dataset = CommonLitDataset.create(DATA_DIR, tokenizer, train=False)
+def main():
+    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL, num_labels=1)
 
-training_args = TrainingArguments(output_dir='training_results',
-                                  evaluation_strategy='epoch')
-trainer = RMSETrainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=val_dataset,
-)
-trainer.train()
+    train_dataset, val_dataset = CommonLitDataset.create(DATA_DIR, tokenizer)
+    training_args = TrainingArguments(output_dir='training_results',
+                                      evaluation_strategy='epoch',
+                                      save_strategy='epoch')
+    trainer = RMSETrainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+    )
+    trainer.train()
+    train_metrics = trainer.evaluate(train_dataset)
+    val_metrics = trainer.evaluate(val_dataset)
+    print(train_metrics)
+    print(val_metrics)
+
+
+if __name__ == '__main__':
+    main()
