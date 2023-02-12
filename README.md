@@ -28,4 +28,11 @@ Request example:
 
 ```python3 make_request.py```
 
+<h3>Deployment</h3>
 
+I didn't deploy this service on GCP, but I created Dockerfile:
+
+```
+docker build -t prjctr .
+docker run -p <you_desire_port>:8000 prjctr
+```
